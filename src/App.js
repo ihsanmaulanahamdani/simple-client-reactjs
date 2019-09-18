@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table } from "react-bootstrap";
+
+import axios from "axios";
 
 import "./App.css";
 
@@ -11,7 +13,7 @@ function App() {
   const [attandances, setAttandance] = useState([]);
 
   function handleSubmit(e) {
-    e.preventDefault()
+    e.preventDefault();
 
     const payload = {
       name: name,
@@ -20,13 +22,39 @@ function App() {
       phone: phone
     };
 
-    setAttandance([...attandances, payload]);
+    function createAttandance() {
+      axios
+        .post("http://localhost:4000/create", payload)
+        .then(({ data: { data } }) => {
+          setAttandance([...attandances, data]);
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    }
+
+    createAttandance();
 
     setName("");
     setAddress("");
     setEmail("");
     setPhone("");
   }
+
+  useEffect(() => {
+    function getData() {
+      axios
+        .get("http://localhost:4000")
+        .then(({ data: { data } }) => {
+          setAttandance(data);
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    }
+
+    getData();
+  }, []);
 
   return (
     <div>
