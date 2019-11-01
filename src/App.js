@@ -10,7 +10,13 @@ function App() {
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [attandances, setAttandance] = useState([]);
+  const [updateName, setUpdateName] = useState("");
+  const [updateAddress, setUpdateAddress] = useState("");
+  const [updateEmail, setUpdateEmail] = useState("");
+  const [updatePhone, setUpdatePhone] = useState("");
+  const [attandances, setAttandances] = useState([]);
+  const [isUpdate, setIsUpdate] = useState(0);
+  const [attandanceId, setAttandanceId] = useState("");
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -24,9 +30,9 @@ function App() {
 
     function createAttandance() {
       axios
-        .post("http://localhost:4000/create", payload)
+        .post("https://powerful-dawn-07149.herokuapp.com/create", payload)
         .then(({ data: { data } }) => {
-          setAttandance([...attandances, data]);
+          setAttandances([...attandances, data]);
         })
         .catch(err => {
           console.log(err);
@@ -41,12 +47,85 @@ function App() {
     setPhone("");
   }
 
+  function updateAttandance(number, person) {
+    setIsUpdate(number);
+    setAttandanceId(person._id);
+    setUpdateName(person.name);
+    setUpdateAddress(person.address);
+    setUpdateEmail(person.email);
+    setUpdatePhone(person.phone);
+  }
+
+  function cancelUpdateAttandance() {
+    setIsUpdate(0);
+  }
+
+  function handleSubmitUpdate(e) {
+    e.preventDefault();
+
+    const payload = {
+      name: updateName,
+      address: updateAddress,
+      email: updateEmail,
+      phone: updatePhone
+    };
+
+    function submitUpdateAttandance() {
+      axios
+        .patch(
+          `https://powerful-dawn-07149.herokuapp.com/update/${attandanceId}`,
+          payload
+        )
+        .then(data => {
+          const newAttandances = attandances.map(attandance => {
+            if (attandance._id === attandanceId) {
+              attandance.name = updateName;
+              attandance.address = updateAddress;
+              attandance.email = updateEmail;
+              attandance.phone = updatePhone;
+            }
+
+            return attandance;
+          });
+
+          setAttandances(newAttandances);
+          setIsUpdate(0);
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    }
+
+    submitUpdateAttandance();
+
+    setAttandanceId("");
+    setUpdateName("");
+    setUpdateAddress("");
+    setUpdateEmail("");
+    setUpdatePhone("");
+  }
+
+  function deleteAttandance(id) {
+    axios
+      .delete(`https://powerful-dawn-07149.herokuapp.com/delete/${id}`)
+      .then(data => {
+        const deleteAttandaceById = attandances.filter(
+          attandance => attandance._id !== id
+        );
+
+        setAttandances(deleteAttandaceById);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  }
+
   useEffect(() => {
     function getData() {
       axios
-        .get("http://localhost:4000")
+        .get("https://powerful-dawn-07149.herokuapp.com")
         .then(({ data: { data } }) => {
-          setAttandance(data);
+          setAttandances(data);
         })
         .catch(err => {
           console.log(err);
@@ -102,16 +181,80 @@ function App() {
               <th>Address</th>
               <th>Email</th>
               <th>Phone</th>
+              <th>Options</th>
             </tr>
           </thead>
           <tbody>
             {attandances.map((person, index) => (
               <tr key={index}>
-                <td>{index + 1}</td>
-                <td>{person.name}</td>
-                <td>{person.address}</td>
-                <td>{person.email}</td>
-                <td>{person.phone}</td>
+                {isUpdate === index + 1 ? (
+                  <>
+                    <td>{index + 1}</td>
+                    <td>
+                      <input
+                        type="text"
+                        name="name"
+                        value={updateName}
+                        placeholder="Name"
+                        onChange={e => setUpdateName(e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        className="ml-1"
+                        name="address"
+                        value={updateAddress}
+                        placeholder="Address"
+                        onChange={e => setUpdateAddress(e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        className="ml-1"
+                        name="email"
+                        value={updateEmail}
+                        placeholder="Email"
+                        onChange={e => setUpdateEmail(e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        className="ml-1"
+                        name="phone"
+                        value={updatePhone}
+                        placeholder="Phone"
+                        onChange={e => setUpdatePhone(e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <button onClick={handleSubmitUpdate}>update</button>
+                      &nbsp;
+                      <button onClick={cancelUpdateAttandance}>cancel</button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td>{index + 1}</td>
+                    <td>{person.name}</td>
+                    <td>{person.address}</td>
+                    <td>{person.email}</td>
+                    <td>{person.phone}</td>
+                    <td>
+                      <button
+                        onClick={() => updateAttandance(index + 1, person)}
+                      >
+                        edit
+                      </button>
+                      &nbsp;
+                      <button onClick={() => deleteAttandance(person._id)}>
+                        delete
+                      </button>
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
